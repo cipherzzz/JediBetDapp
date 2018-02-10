@@ -28,31 +28,12 @@ class App extends Component {
         this.setState({
           web3: results.web3,
         });
-
-        // Instantiate contract once web3 provided.
+        jediBet.setProvider(this.state.web3.currentProvider);
         this.getBet();
       })
-      .catch(() => {
-        console.log("Error finding web3.");
+      .catch((error) => {
+        console.log("Error finding web3. " + error);
       });
-  }
-
-  setupListener() {
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      jediBet
-        .deployed()
-        .then(instance => {
-          var betStatus = instance.BetStatus();
-          betStatus.watch(function (error, result) {
-            if (!error) {
-              console.log(JSON.stringify(error));
-            } else {
-              console.log(JSON.stringify(result));
-            }
-          });
-        })
-        .catch((error => console.log("Error:" + JSON.stringify(error))));
-    });
   }
 
   getAccount() {
@@ -62,21 +43,10 @@ class App extends Component {
   }
 
   getBet() {
-    //get web3 provider session
-    jediBet.setProvider(this.state.web3.currentProvider);
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var jediBetInstance;
-
-    // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      jediBet
-        .deployed()
-        .then(instance => {
-          jediBetInstance = instance;
-          return jediBetInstance.getBetOutcome({ from: accounts[0] });
-        })
-        .then(result => {
+    jediBet
+      .deployed()
+      .then(instance => {
+        instance.getBetOutcome({ from: this.getAccount() }).then(result => {
           return this.setState({
             bet: {
               gameStatus: Number(result[0]),
@@ -92,110 +62,50 @@ class App extends Component {
             }
           });
         })
-        .catch((error => console.log("Error:" + JSON.stringify(error))));
-    });
+          .catch((error => console.log("Error:" + JSON.stringify(error))));
+      });
   }
 
   placeBet(guess, amount) {
-    //get web3 provider session
-    jediBet.setProvider(this.state.web3.currentProvider);
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var jediBetInstance;
-
-    // this.setState({
-    //   bet: {
-    //     gameStatus: 2,
-    //     originator: "0x1111111",
-    //     originatorGuess: guess,
-    //     originatorStatus: 0,
-    //     taker: "",
-    //     takerGuess: 0,
-    //     takerStatus: 0,
-    //     betAmount: amount,
-    //     actualNumber: 5,
-    //     pot: amount
-    //   }
-    // });
-
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      jediBet
-        .deployed()
-        .then(instance => {
-          jediBetInstance = instance;
-          return jediBetInstance.createBet(guess, { from: accounts[0], value: this.state.web3.toWei(amount, "ether") });
-        })
-        .then(result => {
-          this.getBet();
-        })
-        .catch((error => console.log("Error:" + JSON.stringify(error))));
-    });
+    jediBet
+      .deployed()
+      .then(instance => {
+        return instance.createBet(guess, { from: this.getAccount(), value: this.state.web3.toWei(amount, "ether") });
+      })
+      .then(result => {
+        this.getBet();
+      })
+      .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
 
   takeBet(guess) {
-    //get web3 provider session
-    jediBet.setProvider(this.state.web3.currentProvider);
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var jediBetInstance;
-
-    // this.setState({
-    //   bet: {
-    //     gameStatus: 3,
-    //     taker: "0x22222",
-    //     takerGuess: guess,
-    //     takerStatus: 0,
-    //   }
-    // });
-
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      jediBet
-        .deployed()
-        .then(instance => {
-          jediBetInstance = instance;
-          return jediBetInstance.takeBet(guess, { from: accounts[0], value: this.state.web3.toWei(this.state.bet.betAmount, "ether") });
-        })
-        .then(result => {
-          this.getBet();
-        })
-        .catch((error => console.log("Error:" + JSON.stringify(error))));
-    });
+    jediBet
+      .deployed()
+      .then(instance => {
+        return instance.takeBet(guess, { from: this.getAccount(), value: this.state.web3.toWei(this.state.bet.betAmount, "ether") });
+      })
+      .then(result => {
+        this.getBet();
+      })
+      .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
 
   payoutBet() {
-    //get web3 provider session
-    jediBet.setProvider(this.state.web3.currentProvider);
-
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var jediBetInstance;
-
-    // this.setState({
-    //   bet: {
-    //     gameStatus: 3,
-    //     taker: "0x22222",
-    //     takerGuess: guess,
-    //     takerStatus: 0,
-    //   }
-    // });
-
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      jediBet
-        .deployed()
-        .then(instance => {
-          jediBetInstance = instance;
-          return jediBetInstance.payout({ from: accounts[0] });
-        })
-        .then(result => {
-          this.getBet();
-        })
-        .catch((error => console.log("Error:" + JSON.stringify(error))));
-    });
+    jediBet
+      .deployed()
+      .then(instance => {
+        return instance.payout({ from: this.getAccount() });
+      })
+      .then(result => {
+        this.getBet();
+      })
+      .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
 
   render() {
 
     return (
-      <div className="App">
+      <div className="App" >
         <nav className="navbar pure-menu pure-menu-horizontal">
           <a href="#" className="pure-menu-heading pure-menu-link">
             Jedi Bet
