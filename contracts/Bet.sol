@@ -69,18 +69,7 @@ pragma solidity ^0.4.8;
     function createBet(uint _guess) public payable {
       game = Game(msg.value, 0, STATUS_STARTED, JediBet(_guess, msg.sender, STATUS_PENDING), JediBet(0, 0, STATUS_NOT_STARTED));
       game.originator = JediBet(_guess, msg.sender, STATUS_PENDING);
-
-      BetStatus (
-      game.status, 
-      game.originator.status, 
-      game.originator.addr, 
-      game.originator.guess,
-      game.taker.addr, 
-      game.taker.status, 
-      game.taker.guess, 
-      game.betAmount, 
-      game.outcome, 
-      this.balance);
+      getBetOutcome();
     }
 
     function takeBet(uint _guess) public payable { 
@@ -88,18 +77,7 @@ pragma solidity ^0.4.8;
       require(msg.value == game.betAmount);
       game.taker = JediBet(_guess, msg.sender, STATUS_PENDING);
       generateBetOutcome();
-
-      BetStatus (
-      game.status, 
-      game.originator.status, 
-      game.originator.addr, 
-      game.originator.guess,
-      game.taker.addr, 
-      game.taker.status, 
-      game.taker.guess, 
-      game.betAmount, 
-      game.outcome, 
-      this.balance);
+      getBetOutcome();
     }
 
     function payout() public payable {
@@ -121,19 +99,35 @@ pragma solidity ^0.4.8;
      }
 
      resetGame();
-
-     BetStatus (
-      game.status, 
-      game.originator.status, 
-      game.originator.addr, 
-      game.originator.guess,
-      game.taker.addr, 
-      game.taker.status, 
-      game.taker.guess, 
-      game.betAmount, 
-      game.outcome, 
-      this.balance);
+     getBetOutcome();
    }
+
+   function getBetOutcome() public {
+
+        //hide the bets and outcome
+        uint actualNumber = 0;
+        uint takerGuess = 0;
+        uint originatorGuess = 0;
+
+        if (game.status == STATUS_COMPLETE) {
+            //allow the bets and outcome to be visible
+            actualNumber = game.outcome;
+            takerGuess = game.taker.guess;
+            originatorGuess = game.originator.guess;
+        }
+
+        BetStatus (
+          game.status, 
+          game.originator.status, 
+          game.originator.addr, 
+          originatorGuess,
+          game.taker.addr, 
+          game.taker.status, 
+          takerGuess, 
+          game.betAmount, 
+          actualNumber, 
+          this.balance);
+     }
 
     function checkPermissions(address sender) view private {
      //only the originator or taker can call this function
@@ -186,29 +180,29 @@ pragma solidity ^0.4.8;
         }
     }
 
-     function getBetOutcome() public view returns
-     (uint gameStatus, uint originatorStatus, address originatorAddress, uint originatorGuess,
-     address takerAddress, uint takerStatus, uint takerGuess, uint betAmount, uint actualNumber, uint pot) 
-     {
+    //  function getBetOutcome() public view returns
+    //  (uint gameStatus, uint originatorStatus, address originatorAddress, uint originatorGuess,
+    //  address takerAddress, uint takerStatus, uint takerGuess, uint betAmount, uint actualNumber, uint pot) 
+    //  {
         
-        //hide the bets and outcome
-        actualNumber = 0;
-        takerGuess = 0;
-        originatorGuess = 0;
+    //     //hide the bets and outcome
+    //     actualNumber = 0;
+    //     takerGuess = 0;
+    //     originatorGuess = 0;
 
-        if (game.status == STATUS_COMPLETE) {
-            //allow the bets and outcome to be visible
-            actualNumber = game.outcome;
-            takerGuess = game.taker.guess;
-            originatorGuess = game.originator.guess;
-        }
+    //     if (game.status == STATUS_COMPLETE) {
+    //         //allow the bets and outcome to be visible
+    //         actualNumber = game.outcome;
+    //         takerGuess = game.taker.guess;
+    //         originatorGuess = game.originator.guess;
+    //     }
 
-        gameStatus = game.status;
-        originatorStatus = game.originator.status;
-        originatorAddress = game.originator.addr;
-        takerStatus = game.taker.status;
-        takerAddress = game.taker.addr;
-        betAmount = game.betAmount;
-        pot = this.balance;
-     }
+    //     gameStatus = game.status;
+    //     originatorStatus = game.originator.status;
+    //     originatorAddress = game.originator.addr;
+    //     takerStatus = game.taker.status;
+    //     takerAddress = game.taker.addr;
+    //     betAmount = game.betAmount;
+    //     pot = this.balance;
+    //  }
   }

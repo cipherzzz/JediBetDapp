@@ -42,25 +42,43 @@ class App extends Component {
     } else { return ""; }
   }
 
+  populateBetFromEvent(result) {
+
+    //MetaMask events not reliable
+    //https://github.com/MetaMask/metamask-extension/issues/2393
+    //just using logs
+    const logs = result.logs;
+    if (logs) {
+      logs.forEach((log) => {
+        if (log.event === "BetStatus") {
+          const event = log.args;
+          this.setState({
+            bet: {
+              gameStatus: Number(event.gameStatus),
+              originator: event.originatorAddress,
+              originatorGuess: Number(event.originatorGuess),
+              originatorStatus: Number(event.originatorStatus),
+              taker: event.takerAddress,
+              takerGuess: Number(event.takerGuess),
+              takerStatus: Number(event.takerStatus),
+              betAmount: this.state.web3.fromWei(event.betAmount),
+              actualNumber: Number(event.actualNumber),
+              pot: this.state.web3.fromWei(event.pot)
+            }
+          });
+        }
+      })
+    } else {
+      console.log("Missing BetStatus event");
+    }
+  }
+
   getBet() {
     jediBet
       .deployed()
       .then(instance => {
         instance.getBetOutcome({ from: this.getAccount() }).then(result => {
-          return this.setState({
-            bet: {
-              gameStatus: Number(result[0]),
-              originator: result[2],
-              originatorGuess: Number(result[3]),
-              originatorStatus: Number(result[1]),
-              taker: result[4],
-              takerGuess: Number(result[6]),
-              takerStatus: Number(result[5]),
-              betAmount: this.state.web3.fromWei(Number(result[7])),
-              actualNumber: Number(result[8]),
-              pot: this.state.web3.fromWei(Number(result[9]))
-            }
-          });
+          this.populateBetFromEvent(result)
         })
           .catch((error => console.log("Error:" + JSON.stringify(error))));
       });
@@ -73,7 +91,7 @@ class App extends Component {
         return instance.createBet(guess, { from: this.getAccount(), value: this.state.web3.toWei(amount, "ether") });
       })
       .then(result => {
-        this.getBet();
+        this.populateBetFromEvent(result);
       })
       .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
@@ -85,7 +103,7 @@ class App extends Component {
         return instance.takeBet(guess, { from: this.getAccount(), value: this.state.web3.toWei(this.state.bet.betAmount, "ether") });
       })
       .then(result => {
-        this.getBet();
+        this.populateBetFromEvent(result);
       })
       .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
@@ -97,7 +115,7 @@ class App extends Component {
         return instance.payout({ from: this.getAccount() });
       })
       .then(result => {
-        this.getBet();
+        this.populateBetFromEvent(result);
       })
       .catch((error => console.log("Error:" + JSON.stringify(error))));
   }
