@@ -13,5 +13,5 @@ node_modules
 config/development/contracts.json
 config/development/*.sol.js
 config/test/contracts.json
-build
+//build -- add this for heroku
 dist
