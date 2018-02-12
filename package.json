@@ -2,6 +2,9 @@
   "name": "react-box",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "9.4.0"
+  },
   "devDependencies": {
     "autoprefixer": "6.5.1",
     "babel-core": "6.17.0",
