@@ -29,6 +29,7 @@ class App extends Component {
           web3: results.web3,
         });
         jediBet.setProvider(this.state.web3.currentProvider);
+        this.state.web3.version.getNetwork(function (err, res) { console.log("network:" + res) });
         this.getBet();
       })
       .catch((error) => {

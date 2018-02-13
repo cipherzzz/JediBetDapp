@@ -2,9 +2,6 @@
   "name": "react-box",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "9.4.0"
-  },
   "devDependencies": {
     "autoprefixer": "6.5.1",
     "babel-core": "6.17.0",
@@ -54,7 +51,8 @@
   "dependencies": {
     "dotenv": "^2.0.0",
     "react": "^15.4.2",
-    "react-dom": "^15.4.2"
+    "react-dom": "^15.4.2",
+    "truffle-hdwallet-provider": "0.0.3"
   },
   "scripts": {
     "start": "node scripts/start.js",
