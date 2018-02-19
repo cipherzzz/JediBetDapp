@@ -1,7 +1,14 @@
 import React, { Component } from "react";
+import {Digital} from 'react-activity';
 
 import "../App.css";
 import "../css/pure-min.css";
+
+import fail from "../../public/images/fail.gif";
+import place from "../../public/images/startBet.gif";
+import take from "../../public/images/takeBet.gif";
+import payout from "../../public/images/payout.gif";
+import waiting from "../../public/images/waiting.gif";
 
 //jedi bet status
 const STATUS_WINNER = 1;
@@ -25,7 +32,7 @@ export default class Bet extends Component {
     }
 
     componentWillReceiveProps(newProps) {
-        if (newProps.bet !== this.props.bet) {
+        if (newProps !== this.props) {
             this.setState(this.generateStateFromProps(newProps));
         }
     }
@@ -37,7 +44,9 @@ export default class Bet extends Component {
             amount: props.bet.betAmount,
             gameStatus: props.bet.gameStatus,
             actualNumber: props.bet.actualNumber,
-            pot: props.bet.pot
+            pot: props.bet.pot,
+            loading: props.loading,
+            error: props.error
         };
     }
 
@@ -123,7 +132,19 @@ export default class Bet extends Component {
 
 
     renderError() {
-        return <h2>Our apologies, Jedi Bet is not available at this time</h2>
+        return (
+            <div>
+                <img src={fail} alt="error..." />
+                <div><h2>Our apologies, Jedi Bet is not available at this time</h2><Digital size={20} /></div>
+            </div>); 
+    }
+
+    renderLoading(message, gif) {
+    return (
+        <div>
+            <img src={gif} alt="loading..." />
+            <div><h2>{message}</h2><Digital size={20} /></div>
+        </div>); 
     }
 
     placeBet() {
@@ -306,27 +327,37 @@ export default class Bet extends Component {
 
     render() {
 
-        let view = this.renderError();
+        let errorView = this.renderLoading("Jedi Bet is having problems...", fail);;
+        if(this.state.error) {
+            return errorView; 
+        }
+
+        let placeLoading = this.renderLoading("Placing bet you are, wait you must...", place);
+        let takeLoading = this.renderLoading("I'll take that bet...", take);
+        let payoutLoading = this.renderLoading("Sending credits post haste...", payout);
+        let waitLoading = this.renderLoading("Waiting for a valid MetaMask account...", waiting);
+
+        let view = null;
 
         switch (this.state.gameStatus) {
             case STATUS_NOT_STARTED:
-                view = this.renderPlaceBet();
+                view = this.state.loading?placeLoading:this.renderPlaceBet();
                 break;
 
             case STATUS_STARTED:
-                view = this.renderTakeBet();
+                view = this.state.loading?takeLoading:this.renderTakeBet();
                 break;
 
             case STATUS_COMPLETE:
-                view = this.renderBetOutcome();
+                view = this.state.loading?payoutLoading:this.renderBetOutcome();
                 break;
 
             case STATUS_ERROR:
-                view = this.renderError();
+                view = errorView;
                 break;
 
             default:
-                view = this.renderError()
+                view = waitLoading
                 break;
         }
 

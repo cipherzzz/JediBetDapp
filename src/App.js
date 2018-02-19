@@ -18,6 +18,8 @@ class App extends Component {
 
     this.state = {
       bet: {},
+      loading: true,
+      error: null,
       web3: null,
     };
   }
@@ -32,9 +34,10 @@ class App extends Component {
         this.state.web3.version.getNetwork(function (err, res) { console.log("network:" + res) });
         this.getBet();
       })
-      .catch((error) => {
-        console.log("Error finding web3. " + error);
-      });
+      .catch((error => {
+        console.log("Error:" + JSON.stringify(error))
+        this.setState({error: "Jedi Bet Error", loading: false});
+      }));
   }
 
   getAccount() {
@@ -54,6 +57,7 @@ class App extends Component {
         if (log.event === "BetStatus") {
           const event = log.args;
           this.setState({
+            loading: false,
             bet: {
               gameStatus: Number(event.gameStatus),
               originator: event.originatorAddress,
@@ -70,7 +74,7 @@ class App extends Component {
         }
       })
     } else {
-      console.log("Missing BetStatus event");
+      this.setState({error: "Jedi Bet Error", loading: false});
     }
   }
 
@@ -81,11 +85,15 @@ class App extends Component {
         instance.getBetOutcome({ from: this.getAccount() }).then(result => {
           this.populateBetFromEvent(result)
         })
-          .catch((error => console.log("Error:" + JSON.stringify(error))));
+          .catch((error => {
+            console.log("Error:" + JSON.stringify(error))
+            this.setState({error: "Jedi Bet Error", loading: false});
+          }));
       });
   }
 
   placeBet(guess, amount) {
+    this.setState({loading: true});
     jediBet
       .deployed()
       .then(instance => {
@@ -94,10 +102,14 @@ class App extends Component {
       .then(result => {
         this.populateBetFromEvent(result);
       })
-      .catch((error => console.log("Error:" + JSON.stringify(error))));
+      .catch((error => {
+        console.log("Error:" + JSON.stringify(error))
+        this.setState({error: "Jedi Bet Error", loading: false});
+      }));
   }
 
   takeBet(guess) {
+    this.setState({loading: true});
     jediBet
       .deployed()
       .then(instance => {
@@ -106,10 +118,14 @@ class App extends Component {
       .then(result => {
         this.populateBetFromEvent(result);
       })
-      .catch((error => console.log("Error:" + JSON.stringify(error))));
+      .catch((error => {
+        console.log("Error:" + JSON.stringify(error))
+        this.setState({error: "Jedi Bet Error", loading: false});
+      }));
   }
 
   payoutBet() {
+    this.setState({loading: true});
     jediBet
       .deployed()
       .then(instance => {
@@ -118,8 +134,12 @@ class App extends Component {
       .then(result => {
         this.populateBetFromEvent(result);
       })
-      .catch((error => console.log("Error:" + JSON.stringify(error))));
+      .catch((error => {
+        console.log("Error:" + JSON.stringify(error))
+        this.setState({error: "Jedi Bet Error", loading: false});
+      }));
   }
+
 
   render() {
 
@@ -149,6 +169,8 @@ class App extends Component {
               <BetComponent
                 account={this.getAccount()}
                 bet={this.state.bet}
+                loading={this.state.loading}
+                error={this.state.error}
                 placeBet={(guess, amount) => { this.placeBet(guess, amount) }}
                 takeBet={(guess) => { this.takeBet(guess) }}
                 payoutBet={() => { this.payoutBet() }}
