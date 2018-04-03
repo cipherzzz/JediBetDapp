@@ -1,49 +1,38 @@
 pragma solidity ^0.4.8;
   contract Bet {
 
-    //jedi bet status
-    uint8 constant STATUS_UNKNOWN = 0;
-    uint8 constant STATUS_WINNER = 1;
-    uint8 constant STATUS_LOSE = 2;
-    uint8 constant STATUS_TIE = 3;
-    uint8 constant STATUS_PENDING = 4;
-
-    //game status
-    uint8 constant STATUS_NOT_STARTED = 0;
-    uint8 constant STATUS_STARTED = 2;
-    uint8 constant STATUS_COMPLETE = 3;
-
-    //general status
-    uint8 constant STATUS_ERROR = 4;
+    //status enums
+    enum BetStatusEnum {STATUS_UNKNOWN,STATUS_WINNER,STATUS_LOSE,STATUS_TIE,STATUS_PENDING, STATUS_ERROR}
+    enum GameStatusEnum {STATUS_NOT_STARTED, STATUS_STARTED, STATUS_COMPLETE, STATUS_ERROR }
 
     //the 'better' structure
     struct JediBet {
-      uint8 guess;
+      uint guess;
       address addr;
-      uint8 status;
+      BetStatusEnum status;
       uint betAmount;
     }
 
     //the 'game' structure
     struct Game {
-      uint betAmount;
-      uint8 outcome;
-      uint8 status;
+      uint pot;
+      uint outcome;
+      GameStatusEnum status;
       JediBet originator;
       JediBet taker;
     }
 
     //bet status event
     event BetStatus (
-      uint8 gameStatus, 
-      uint8 originatorStatus, 
+      GameStatusEnum gameStatus, 
+      BetStatusEnum originatorStatus, 
       address originatorAddress, 
-      uint8 originatorGuess,
+      uint originatorGuess,
       address takerAddress, 
-      uint8 takerStatus, 
-      uint8 takerGuess, 
+      BetStatusEnum takerStatus, 
+      uint takerGuess, 
       uint betAmount, 
-      uint8 actualNumber, 
+      uint actualNumber, 
       uint pot);
 
     //the game
@@ -54,33 +43,34 @@ pragma solidity ^0.4.8;
 
     function resetGame() private {
       //reset game
-      game.status = STATUS_NOT_STARTED;
+      game.status = GameStatusEnum.STATUS_NOT_STARTED;
       game.outcome = 0;
-      game.betAmount = 0;
+      game.pot = 0;
 
       game.originator.guess = 0;
       game.originator.addr = 0;
-      game.originator.status = STATUS_NOT_STARTED;
+      game.originator.status = BetStatusEnum.STATUS_UNKNOWN;
 
       game.taker.guess = 0;
       game.taker.addr = 0;
-      game.taker.status = STATUS_NOT_STARTED;
+      game.taker.status = BetStatusEnum.STATUS_UNKNOWN;
     }
 
     function createBet(uint8 _guess) public payable {
-      require(game.status == STATUS_NOT_STARTED 
-                && game.originator.status == 0 
-                && game.taker.status == 0);    
-      game = Game(msg.value, 0, STATUS_STARTED, JediBet(_guess, msg.sender, STATUS_PENDING, 0), JediBet(0, 0, STATUS_NOT_STARTED, 0));
-      game.originator = JediBet(_guess, msg.sender, STATUS_PENDING, msg.value);
+      require(game.status == GameStatusEnum.STATUS_NOT_STARTED 
+                && game.originator.status == BetStatusEnum.STATUS_UNKNOWN 
+                && game.taker.status == BetStatusEnum.STATUS_UNKNOWN);    
+      game = Game(0, 0, GameStatusEnum.STATUS_STARTED, JediBet(_guess, msg.sender, BetStatusEnum.STATUS_PENDING, msg.value), JediBet(0, 0, BetStatusEnum.STATUS_UNKNOWN, 0));
       getBetOutcome();
     }
 
     function takeBet(uint8 _guess) public payable { 
-      require(game.status == STATUS_STARTED 
-                && game.originator.status == STATUS_PENDING 
-                && game.taker.status == STATUS_NOT_STARTED);
-      game.taker = JediBet(_guess, msg.sender, STATUS_PENDING, msg.value);
+      require(game.status == GameStatusEnum.STATUS_STARTED 
+                && game.originator.status == BetStatusEnum.STATUS_PENDING 
+                && game.taker.status == BetStatusEnum.STATUS_UNKNOWN
+                && msg.value == game.originator.betAmount);
+      game.taker = JediBet(_guess, msg.sender, BetStatusEnum.STATUS_PENDING, msg.value);
+      game.pot = game.originator.betAmount + game.taker.betAmount;
       generateBetOutcome();
       getBetOutcome();
     }
@@ -88,31 +78,31 @@ pragma solidity ^0.4.8;
     function payout() public payable {
 
      checkPermissions(msg.sender);
-     require(game.status == STATUS_COMPLETE 
-                && game.originator.status > 0 
-                && game.originator.status < 4
-                && game.taker.status > 0 
-                && game.taker.status < 4);
+     require(game.status ==  GameStatusEnum.STATUS_COMPLETE 
+                && game.originator.status > BetStatusEnum.STATUS_UNKNOWN 
+                && game.originator.status < BetStatusEnum.STATUS_PENDING
+                && game.taker.status > BetStatusEnum.STATUS_UNKNOWN
+                && game.taker.status < BetStatusEnum.STATUS_PENDING);
      
-     uint256 origAmt = game.originator.betAmount;
-     uint256 takerAmt = game.taker.betAmount;
-     game.originator.betAmount = 0;
-     game.taker.betAmount = 0;
+     uint256 origPot = game.pot;
+     BetStatusEnum origStatus = game.originator.status; 
+     BetStatusEnum takerStatus = game.taker.status;
+     address origAddress = game.originator.addr;
+     address takerAddress = game.taker.addr;
+    
+     resetGame(); // optimistic accounting
      
-     resetGame();
-     getBetOutcome();
-     
-     if (game.originator.status == STATUS_TIE && game.taker.status == STATUS_TIE) {
-       game.originator.addr.transfer(origAmt);
-       game.taker.addr.transfer(takerAmt);
+     if (origStatus == BetStatusEnum.STATUS_TIE && takerStatus == BetStatusEnum.STATUS_TIE) {
+       origAddress.transfer(origPot/2);
+       takerAddress.transfer(origPot/2);
      } else {
-        if (game.originator.status == STATUS_WINNER) {
-          game.originator.addr.transfer(origAmt*2);
-        } else if (game.taker.status == STATUS_WINNER) {
-          game.taker.addr.transfer(takerAmt*2);
+        if (origStatus == BetStatusEnum.STATUS_WINNER) {
+          origAddress.transfer(origPot);
+        } else if (takerStatus == BetStatusEnum.STATUS_WINNER) {
+          takerAddress.transfer(origPot);
         } else {
-          game.originator.addr.transfer(origAmt);
-          game.taker.addr.transfer(takerAmt);
+          origAddress.transfer(origPot/2);
+          takerAddress.transfer(origPot/2);
         }
      }
    }
@@ -120,11 +110,11 @@ pragma solidity ^0.4.8;
    function getBetOutcome() private {
 
         //hide the bets and outcome
-        uint8 actualNumber = 0;
-        uint8 takerGuess = 0;
-        uint8 originatorGuess = 0;
+        uint actualNumber = 0;
+        uint takerGuess = 0;
+        uint originatorGuess = 0;
 
-        if (game.status == STATUS_COMPLETE) {
+        if (game.status == GameStatusEnum.STATUS_COMPLETE) {
             //allow the bets and outcome to be visible
             actualNumber = game.outcome;
             takerGuess = game.taker.guess;
@@ -139,9 +129,9 @@ pragma solidity ^0.4.8;
           game.taker.addr, 
           game.taker.status, 
           takerGuess, 
-          game.betAmount, 
+          game.originator.betAmount, 
           actualNumber, 
-          game.betAmount*2);
+          game.pot);
      }
 
     function checkPermissions(address sender) view private {
@@ -149,48 +139,28 @@ pragma solidity ^0.4.8;
      require(sender == game.originator.addr || sender == game.taker.addr);  
     }
 
-    function getBetAmount() private view returns (uint) {
-      checkPermissions(msg.sender);
-      return game.betAmount;
-    }
-
-     function getOriginatorGuess() private view returns (uint) {
-       checkPermissions(msg.sender);
-       return game.originator.guess;
-     }
-
-     function getTakerGuess() private view returns (uint) {
-       checkPermissions(msg.sender);
-       return game.taker.guess;
-     }
-
-     function getPot() private view returns (uint256) {
-        checkPermissions(msg.sender);
-        return game.betAmount*2;
-     }
-
     function generateBetOutcome() private {
         //todo - not a great way to generate a random number but ok for now
         game.outcome = uint8(block.blockhash(block.number-1))%10 + 1;
-        game.status = STATUS_COMPLETE;
+        game.status = GameStatusEnum.STATUS_COMPLETE;
 
         if (game.originator.guess == game.taker.guess) {
-          game.originator.status = STATUS_TIE;
-          game.taker.status = STATUS_TIE;
+          game.originator.status = BetStatusEnum.STATUS_TIE;
+          game.taker.status = BetStatusEnum.STATUS_TIE;
         } else if (game.originator.guess > game.outcome && game.taker.guess > game.outcome) {
-          game.originator.status = STATUS_TIE;
-          game.taker.status = STATUS_TIE;
+          game.originator.status = BetStatusEnum.STATUS_TIE;
+          game.taker.status = BetStatusEnum.STATUS_TIE;
         } else {
            if ((game.outcome - game.originator.guess) < (game.outcome - game.taker.guess)) {
-             game.originator.status = STATUS_WINNER;
-             game.taker.status = STATUS_LOSE;
+             game.originator.status = BetStatusEnum.STATUS_WINNER;
+             game.taker.status = BetStatusEnum.STATUS_LOSE;
            } else if ((game.outcome - game.taker.guess) < (game.outcome - game.originator.guess)) {
-             game.originator.status = STATUS_LOSE;
-             game.taker.status = STATUS_WINNER;
+             game.originator.status = BetStatusEnum.STATUS_LOSE;
+             game.taker.status = BetStatusEnum.STATUS_WINNER;
            } else {
-             game.originator.status = STATUS_ERROR;
-             game.taker.status = STATUS_ERROR;
-             game.status = STATUS_ERROR;
+             game.originator.status = BetStatusEnum.STATUS_ERROR;
+             game.taker.status = BetStatusEnum.STATUS_ERROR;
+             game.status = GameStatusEnum.STATUS_ERROR;
            }
         }
     }
