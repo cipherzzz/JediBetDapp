@@ -142,7 +142,7 @@ pragma solidity ^0.4.8;
 
     function generateBetOutcome() private {
         //todo - not a great way to generate a random number but ok for now
-        game.outcome = uint8(block.blockhash(block.number-1))%10 + 1;
+        game.outcome = uint8(blockhash(block.number-1))%10 + 1;
         game.status = GameStatusEnum.STATUS_COMPLETE;
 
         if (game.originator.guess == game.taker.guess) {

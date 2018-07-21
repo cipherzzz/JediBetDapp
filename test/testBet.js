@@ -19,8 +19,6 @@ contract("Bet", function(accounts) {
 
   const originatorBalanceBeforeBet = web3.eth.getBalance(betOriginator);
   const takerBalanceBeforeBet = web3.eth.getBalance(betTaker);
-  let originatorBalanceAfterBet;
-  let takerBalanceAfterBet;
 
   let bet;
 
@@ -84,7 +82,6 @@ contract("Bet", function(accounts) {
     const tx = await bet.getBetOutcome({from: betOriginator})
     const betOutcome = tx.logs[0].args
     expect(betOutcome).to.exist;
-    console.log(betOutcome)
 
     assert.notEqual(betOutcome.gameStatus, "", "Bet outcome description should not be empty");
     assert.notEqual(betOutcome.originatorStatus, "", "Bet originator status should not be empty");

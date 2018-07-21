@@ -132,7 +132,7 @@ class App extends Component {
     jediBet
       .deployed()
       .then(instance => {
-        return instance.payout({ from: this.getAccount(), gas: 3000000 });
+        return instance.payout({ from: this.getAccount(), gas: 300000 });
       })
       .then(result => {
         this.populateBetFromEvent(result);
