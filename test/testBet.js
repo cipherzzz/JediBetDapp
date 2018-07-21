@@ -1,3 +1,8 @@
+var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised)
+var expect = chai.expect;
+
 var Bet = artifacts.require("./contracts/Bet");
 
 const betAmountInEth = 0.25;
@@ -17,257 +22,82 @@ contract("Bet", function(accounts) {
   let originatorBalanceAfterBet;
   let takerBalanceAfterBet;
 
-  it("We should be able to start a bet by setting a guess and sending the bet amount that the contract was initialized with", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance.createBet
-        .sendTransaction(originatorBet, {
-          from: betOriginator,
-          value: agreedUponBetAmount,
-        })
-        .then(tx => {
-          assert.notEqual(tx, "", "We should get a transaction hash");
-        });
-    });
+  let bet;
+
+  it("We should be able to start a bet by setting a guess and sending the bet amount that the contract was initialized with", async function() {
+    bet = await Bet.deployed()
+    const tx = await bet.createBet(originatorBet, {from: betOriginator,value: agreedUponBetAmount})
+    expect(tx).to.exist;
+
+    const betEvent = tx.logs[0].args
+    expect(betEvent).to.exist;
+    expect(betEvent.gameStatus.toNumber()).to.equal(1);
+    expect(betEvent.originatorStatus.toNumber()).to.equal(4);
+    expect(betEvent.originatorAddress).to.not.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.originatorGuess.toNumber()).to.equal(0); //Hides until the end
+    expect(betEvent.takerAddress).to.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.takerStatus.toNumber()).to.equal(0);
+    expect(betEvent.takerGuess.toNumber()).to.equal(0);
+    expect(betEvent.betAmount.toNumber()).to.equal(Number(agreedUponBetAmount));
+    expect(betEvent.actualNumber.toNumber()).to.equal(0);
+    expect(betEvent.pot.toNumber()).to.equal(0);
+
   });
 
-  it("The originating bet amount in the contract should match the passed in values", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getBetAmount({
-          from: betOriginator,
-        })
-        .then(betAmount => {
-          //console.log("betAmount: " + agreedUponBetAmount);
-          assert.equal(betAmount, agreedUponBetAmount, "Bet amounts don't match");
-        });
-    });
-  });
+  it("We should be able to take a bet by setting a guess and sending the bet amount that the contract was initialized with", async function() {
+    
+    const tx = await bet.takeBet(takerBet, {from: betTaker, value: agreedUponBetAmount})
+    expect(tx).to.exist;
 
-  it("The originating bet guess in the contract should match the passed in values", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getOriginatorGuess({
-          from: betOriginator,
-        })
-        .then(betGuess => {
-          assert.equal(betGuess, originatorBet, "Bet guesses don't match");
-        });
-    });
-  });
-
-  it("The originator balance should be less the bet amount and gas", function() {
-    const originalBalanceMinusBet = originatorBalanceBeforeBet - agreedUponBetAmount;
-    originatorBalanceAfterBet = web3.eth.getBalance(betOriginator);
-    assert.equal(
-      originatorBalanceAfterBet < originalBalanceMinusBet,
-      true,
-      "Current Balance should be less than original balance minus bet because of gas"
-    );
-  });
-
-  it("We should be able to take a bet by setting a guess and sending the bet amount that the contract was initialized with", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance.takeBet
-        .sendTransaction(takerBet, {
-          from: betTaker,
-          value: agreedUponBetAmount,
-        })
-        .then(tx => {
-          assert.notEqual(tx, "", "We should get a transaction hash");
-        });
-    });
+    const betEvent = tx.logs[0].args
+    expect(betEvent).to.exist;
+    expect(betEvent.gameStatus.toNumber()).to.equal(2);
+    expect(betEvent.originatorStatus.toNumber()).to.not.equal(0);
+    expect(betEvent.originatorAddress).to.not.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.originatorGuess.toNumber()).to.equal(originatorBet); //Hides until the end
+    expect(betEvent.takerAddress).to.not.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.takerStatus.toNumber()).to.not.equal(0);
+    expect(betEvent.takerGuess.toNumber()).to.equal(takerBet);
+    expect(betEvent.betAmount.toNumber()).to.equal(Number(agreedUponBetAmount));
+    expect(betEvent.actualNumber.toNumber()).to.not.equal(0);
+    expect(betEvent.pot.toNumber()).to.equal(agreedUponBetAmount*2);
+  
   });
 
   it("Taking the bet should fail if the bet amount does not equal the bet amount that the contract was initialized with", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance.takeBet
-        .sendTransaction(takerBet, {
-          from: betTaker,
-          value: wrongBetAmount,
-        })
-        .catch(error => {
-          assert.isDefined(error, "We should get an error");
-        });
-    });
+    const tx = bet.takeBet(takerBet, {from: betTaker, value: wrongBetAmount})
+    expect(tx).to.be.rejectedWith('VM Exception while processing transaction: revert')
   });
 
-  it("The taker bet guess in the contract should match the passed in values", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getTakerGuess({
-          from: betTaker,
-        })
-        .then(betGuess => {
-          assert.equal(betGuess, takerBet, "Bet guesses don't match");
-        });
-    });
+  it("ONLY the taker or originator should be able to call the payout function", async function() {
+    const tx = bet.payout({from: badActor})
+    expect(tx).to.be.rejectedWith('VM Exception while processing transaction: revert')
   });
 
-  it("The taker balance should be less the bet amount and gas", function() {
-    const originalBalanceMinusBet = takerBalanceBeforeBet - agreedUponBetAmount;
-    takerBalanceAfterBet = web3.eth.getBalance(betTaker);
-    assert.equal(
-      takerBalanceAfterBet < originalBalanceMinusBet,
-      true,
-      "Current Balance should be less than original balance minus bet because of gas"
-    );
+  it("The taker or originator should be able to call the payout to transfer winnings", async function() {
+    const tx = await bet.payout({from: betTaker})
+    expect(tx).to.exist;
   });
 
-  it("The contract balance should reflect the originator and taker bets", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getPot({
-          from: betTaker,
-        })
-        .then(balance => {
-          assert.equal(
-            balance.toString(),
-            (agreedUponBetAmount * 2).toString(),
-            "Contact Balance should equal the bet amounts "
-          );
-        });
-    });
-  });
+  it("Originator and Taker balances should reflect bet outcome", async function() {
 
-  it("The taker or originator should be able to call the payout to transfer winnings", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .payout({
-          from: betTaker,
-        })
-        .then(tx => {
-          assert.notEqual(tx.tx, "", "We should get a transaction hash");
-        });
-    });
-  });
+    const tx = await bet.getBetOutcome({from: betOriginator})
+    const betOutcome = tx.logs[0].args
+    expect(betOutcome).to.exist;
+    console.log(betOutcome)
 
-  it("Originator and Taker balances should reflect bet outcome", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getBetOutcome({
-          from: betTaker,
-        })
-        .then(outcome => {
-          assert.notEqual(outcome[0], "", "Bet outcome description should not be empty");
-          assert.notEqual(outcome[2], "", "Bet originator status should not be empty");
-          assert.notEqual(outcome[4], "", "Bet taker status should not be empty");
+    assert.notEqual(betOutcome.gameStatus, "", "Bet outcome description should not be empty");
+    assert.notEqual(betOutcome.originatorStatus, "", "Bet originator status should not be empty");
+    assert.notEqual(betOutcome.betStatus, "", "Bet taker status should not be empty");
 
-          const originatorBalanceAfterPayout = web3.eth.getBalance(betOriginator);
-          const takerBalanceAfterPayout = web3.eth.getBalance(betTaker);
+    const originatorBalanceAfterPayout = web3.eth.getBalance(betOriginator);
+    const takerBalanceAfterPayout = web3.eth.getBalance(betTaker);
 
-          //console.log(JSON.stringify(outcome));
 
-          if (outcome[2].toString() === "1") {
-            let gain = originatorBalanceAfterPayout.minus(originatorBalanceBeforeBet);
-            //console.log("originator gain:" + gain);
-
-            //if originator won
-            assert.equal(
-              gain.dividedBy(agreedUponBetAmount).greaterThan(0.9),
-              true,
-              "Balance Gain after payout for a winning bet should be within 10% of bet amount"
-            );
-          } else if (outcome[4].toString() === "1") {
-            let gain = takerBalanceAfterPayout.minus(takerBalanceBeforeBet);
-            //console.log("taker gain:" + gain);
-
-            //if taker won
-            assert.equal(
-              gain.dividedBy(agreedUponBetAmount).greaterThan(0.9),
-              true,
-              "Balance Gain after payout for a winning bet should be within 10% of bet amount"
-            );
-          } else {
-            //a tie or error
-
-            let takerDelta = takerBalanceBeforeBet.minus(takerBalanceAfterPayout).dividedBy(takerBalanceBeforeBet);
-
-            let originatorDelta = originatorBalanceBeforeBet
-              .minus(originatorBalanceAfterPayout)
-              .dividedBy(originatorBalanceBeforeBet);
-
-            //console.log("originatorDelta: " + originatorDelta);
-            //console.log("takerDelta: " + takerDelta);
-
-            assert.equal(
-              takerDelta.lessThan(0.01) && originatorDelta.lessThan(0.01),
-              true,
-              "Balance after payout for a tied bet should be within 1% of original balance"
-            );
-          }
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the payout function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .payout({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the getBetAmount function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getBetAmount({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the getOriginatorGuess function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getOriginatorGuess({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the getTakerGuess function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getTakerGuess({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the getPot function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getPot({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
-  });
-
-  it("ONLY the taker or originator should be able to call the getBetAmount function", function() {
-    return Bet.deployed().then(function(instance) {
-      return instance
-        .getBetAmount({
-          from: badActor,
-        })
-        .catch(error => {
-          assert.isDefined(error, "Only originator/taker can call function");
-        });
-    });
+    if (betOutcome.originatorStatus.toString() === "1") {
+      expect(originatorBalanceAfterPayout).to.be.above(originatorBalanceBeforeBet)
+    } else if (betOutcome.takerStatus.toString() === "1") {
+      expect(takerBalanceAfterPayout).to.be.above(takerBalanceBeforeBet)
+    } 
   });
 });

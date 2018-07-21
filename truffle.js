@@ -1,12 +1,13 @@
-var mnemonic = "suit crane income frame twist remove win panda sick lava item moment";
+var mnemonic = "appear stomach artist ancient order chronic judge close arch sick example oxygen";
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
   networks: {
     development: {
-      host: "localhost",
-      port: 8545,
-      network_id: "*" // Match any network id
+      provider: new HDWalletProvider(mnemonic, "http://localhost:8545"),
+      network_id: 577,
+      gas: 2000000,
+      gasPrice: 10000000000,
     },
     ropsten: {
       provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/fYegUFu9HulgkCPiCTuy"),

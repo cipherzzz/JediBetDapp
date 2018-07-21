@@ -56,6 +56,7 @@ class App extends Component {
       logs.forEach((log) => {
         if (log.event === "BetStatus") {
           const event = log.args;
+          console.log(JSON.stringify(event))
           this.setState({
             loading: false,
             bet: {
@@ -100,7 +101,9 @@ class App extends Component {
         return instance.createBet(guess, { from: this.getAccount(), value: this.state.web3.toWei(amount, "ether") });
       })
       .then(result => {
+        console.log(result)
         this.populateBetFromEvent(result);
+        console.log(this.state)
       })
       .catch((error => {
         console.log("Error:" + JSON.stringify(error))
@@ -129,7 +132,7 @@ class App extends Component {
     jediBet
       .deployed()
       .then(instance => {
-        return instance.payout({ from: this.getAccount() });
+        return instance.payout({ from: this.getAccount(), gas: 3000000 });
       })
       .then(result => {
         this.populateBetFromEvent(result);

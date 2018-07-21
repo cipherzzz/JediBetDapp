@@ -18,11 +18,11 @@ const STATUS_PENDING = 4;
 
 //game status
 const STATUS_NOT_STARTED = 0;
-const STATUS_STARTED = 2;
-const STATUS_COMPLETE = 3;
+const STATUS_STARTED = 1;
+const STATUS_COMPLETE = 2;
 
 //general status for game or player
-const STATUS_ERROR = 4;
+const STATUS_ERROR = 3;
 
 export default class Bet extends Component {
 

@@ -105,9 +105,10 @@ pragma solidity ^0.4.8;
           takerAddress.transfer(origPot/2);
         }
      }
+     getBetOutcome();
    }
 
-   function getBetOutcome() private {
+   function getBetOutcome() public {
 
         //hide the bets and outcome
         uint actualNumber = 0;
