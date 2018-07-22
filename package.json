@@ -69,7 +69,7 @@
     "test": "node scripts/test.js --env=jsdom",
     "solium:lint:fix": "solium lint -d ./contracts --fix",
     "solium:lint": "solium lint -d ./contracts",
-    "precommit": "npm run solium:lint:fix && truffle compile"
+    "precommit": "npm run solium:lint:fix"
   },
   "jest": {
     "collectCoverageFrom": [
