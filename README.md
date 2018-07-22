@@ -1,4 +1,4 @@
-# A Jedi’s guide to Ethereum — Part 4(web3)
+# A Jedi’s guide to Ethereum — Part 4(web3) [![Build Status](https://travis-ci.com/cipherzzz/JediBetDapp.svg?branch=master)](https://travis-ci.com/cipherzzz/JediBetDapp)
 
 In our [last
 article](https://medium.com/@cipherz/a-jedis-guide-to-ethereum-part-3b-remix-1b8d98d909d4),
