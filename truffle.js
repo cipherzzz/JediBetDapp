@@ -10,18 +10,11 @@ module.exports = {
     },
     ropsten: {
       provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/fYegUFu9HulgkCPiCTuy"),
-      network_id: 3,
-      gas: 4000000
+      network_id: 3
     },
-    rinkeby: {
-      provider: new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/fYegUFu9HulgkCPiCTuy'),
-      network_id: '*',
-      gas: 4500000,
-      gasPrice: 25000000000
-    }
-  },
-  rpc: {
-    host: 'localhost',
-    post: 8080
+    kovan: {
+      provider: new HDWalletProvider(mnemonic, "https://kovan.infura.io/fYegUFu9HulgkCPiCTuy"),
+      network_id: 42
+    },
   }
 };
