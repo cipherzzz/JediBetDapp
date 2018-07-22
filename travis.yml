@@ -1,0 +1,19 @@
+language: node_js
+
+node_js:
+  - "8"
+
+cache:
+  directories:
+  - node_modules
+
+before_script:
+  - ./startGanache.sh
+
+script:
+  - npm run solium:lint
+  - rm -rf ./build
+  - truffle test --development
+
+after_script:
+  - ./stopGanache.sh
