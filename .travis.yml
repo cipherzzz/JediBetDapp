@@ -20,6 +20,9 @@ after_script:
 
 deploy:
   provider: heroku
+  email: "dev@cipherz.com"
   api_key:
     secure: $HEROKU_API_KEY
   app: "jedibet"
+  on:
+    branch: master
