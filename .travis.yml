@@ -14,6 +14,7 @@ script:
   - npm run solium:lint
   - rm -rf ./build
   - truffle test --development
+  - npm run build
 
 after_script:
   - ./stopGanache.sh
