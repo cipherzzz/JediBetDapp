@@ -12,7 +12,6 @@ before_script:
 
 script:
   - npm run solium:lint
-  - rm -rf ./build
   - truffle test --development
   - ls -a
   - npm run build
