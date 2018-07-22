@@ -12,10 +12,11 @@ before_script:
 
 script:
   - npm run solium:lint
+  - truffle migrate --development
   - truffle test --development
   - ls -a
   - npm run build
-  - truffle deploy --network kovan
+  - truffle migrate --network kovan
 
 after_script:
   - ./stopGanache.sh
