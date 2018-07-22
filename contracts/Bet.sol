@@ -49,6 +49,7 @@ contract Bet {
         game.pot = 0;
 
         game.originator.guess = 0;
+        game.originator.betAmount = 0;
         game.originator.addr = 0;
         game.originator.status = BetStatusEnum.STATUS_UNKNOWN;
 

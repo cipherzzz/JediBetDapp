@@ -15,6 +15,7 @@ script:
   - truffle test --development
   - ls -a
   - npm run build
+  - truffle deploy --network kovan
 
 after_script:
   - ./stopGanache.sh
