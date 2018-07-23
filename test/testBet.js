@@ -22,8 +22,28 @@ contract("Bet", function(accounts) {
 
   let bet;
 
-  it("We should be able to start a bet by setting a guess and sending the bet amount that the contract was initialized with", async function() {
+  it("The state of the Bet smart contract should be clean before a bet takes place", async function() {
+    // get shared instance of contract
     bet = await Bet.deployed()
+
+    const tx = await bet.getBetOutcome({from: betTaker})
+    expect(tx).to.exist;
+
+    const betEvent = tx.logs[0].args
+    expect(betEvent).to.exist;
+    expect(betEvent.gameStatus.toNumber()).to.equal(0);
+    expect(betEvent.originatorStatus.toNumber()).to.equal(0);
+    expect(betEvent.originatorAddress).to.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.originatorGuess.toNumber()).to.equal(0); //Hides until the end
+    expect(betEvent.takerAddress).to.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.takerStatus.toNumber()).to.equal(0);
+    expect(betEvent.takerGuess.toNumber()).to.equal(0);
+    expect(betEvent.betAmount.toNumber()).to.equal(0);
+    expect(betEvent.actualNumber.toNumber()).to.equal(0);
+    expect(betEvent.pot.toNumber()).to.equal(0);
+  });
+
+  it("We should be able to start a bet by setting a guess and sending the bet amount that the contract was initialized with", async function() {
     const tx = await bet.createBet(originatorBet, {from: betOriginator,value: agreedUponBetAmount})
     expect(tx).to.exist;
 
@@ -75,7 +95,19 @@ contract("Bet", function(accounts) {
   it("The taker or originator should be able to call the payout to transfer winnings", async function() {
     const tx = await bet.payout({from: betTaker})
     expect(tx).to.exist;
-    console.log(JSON.stringify(tx));
+
+    const betEvent = tx.logs[0].args
+    expect(betEvent).to.exist;
+    expect(betEvent.gameStatus.toNumber()).to.equal(0);
+    expect(betEvent.originatorStatus.toNumber()).to.equal(0);
+    expect(betEvent.originatorAddress).to.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.originatorGuess.toNumber()).to.equal(0); //Hides until the end
+    expect(betEvent.takerAddress).to.equal("0x0000000000000000000000000000000000000000");
+    expect(betEvent.takerStatus.toNumber()).to.equal(0);
+    expect(betEvent.takerGuess.toNumber()).to.equal(0);
+    expect(betEvent.betAmount.toNumber()).to.equal(0);
+    expect(betEvent.actualNumber.toNumber()).to.equal(0);
+    expect(betEvent.pot.toNumber()).to.equal(0);
   });
 
   it("Originator and Taker balances should reflect bet outcome", async function() {
