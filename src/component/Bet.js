@@ -38,13 +38,14 @@ export default class Bet extends Component {
     }
 
     generateStateFromProps(props) {
+        console.log(JSON.stringify(props))
         return {
-            taker: { guess: props.bet.takerGuess, addr: this.getCurrentAccountForStatus(props.bet.gameStatus, props.bet.taker, false), status: props.bet.takerStatus },
-            originator: { guess: props.bet.originatorGuess, addr: this.getCurrentAccountForStatus(props.bet.gameStatus, props.bet.originator, true), status: props.bet.originatorStatus },
-            amount: props.bet.betAmount,
-            gameStatus: props.bet.gameStatus,
-            actualNumber: props.bet.actualNumber,
-            pot: props.bet.pot,
+            taker: { guess: Number(props.bet.takerGuess), addr: this.getCurrentAccountForStatus(props.bet.gameStatus, props.bet.taker, false), status: props.bet.takerStatus },
+            originator: { guess: Number(props.bet.originatorGuess), addr: this.getCurrentAccountForStatus(props.bet.gameStatus, props.bet.originator, true), status: props.bet.originatorStatus },
+            amount: Number(props.bet.betAmount),
+            gameStatus: Number(props.bet.gameStatus),
+            actualNumber: Number(props.bet.actualNumber),
+            pot: Number(props.bet.pot),
             loading: props.loading,
             error: props.error
         };

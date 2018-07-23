@@ -75,6 +75,7 @@ contract("Bet", function(accounts) {
   it("The taker or originator should be able to call the payout to transfer winnings", async function() {
     const tx = await bet.payout({from: betTaker})
     expect(tx).to.exist;
+    console.log(JSON.stringify(tx));
   });
 
   it("Originator and Taker balances should reflect bet outcome", async function() {
