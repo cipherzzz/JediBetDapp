@@ -16,3 +16,4 @@ config/test/contracts.json
 //build -- add this for heroku
 dist
 build_webpack/
+.env

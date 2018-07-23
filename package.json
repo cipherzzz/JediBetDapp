@@ -17,7 +17,7 @@
     "cross-spawn": "4.0.2",
     "css-loader": "0.26.0",
     "detect-port": "1.0.1",
-    "dotenv": "2.0.0",
+    "dotenv": "^2.0.0",
     "eslint": "3.8.1",
     "eslint-config-react-app": "^0.5.0",
     "eslint-loader": "1.6.0",
@@ -55,7 +55,6 @@
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
-    "dotenv": "^2.0.0",
     "growl": "^1.10.0",
     "hoek": "^4.2.1",
     "react": "^15.4.2",
@@ -69,7 +68,8 @@
     "test": "node scripts/test.js --env=jsdom",
     "solium:lint:fix": "solium lint -d ./contracts --fix",
     "solium:lint": "solium lint -d ./contracts",
-    "precommit": "npm run solium:lint:fix"
+    "precommit": "truffle compile && npm run solium:lint:fix && npm run testChain",
+    "testChain": "./startGanache.sh && truffle test && ./stopGanache.sh"
   },
   "jest": {
     "collectCoverageFrom": [
