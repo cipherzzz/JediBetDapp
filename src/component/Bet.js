@@ -160,6 +160,31 @@ export default class Bet extends Component {
         this.props.payoutBet();
     }
 
+    isValid() {
+        let valid
+        switch (this.state.gameStatus) {
+            case STATUS_NOT_STARTED:
+                valid = 
+                    this.getEmptyForZero(this.state.originator.addr) !== ''  && 
+                    this.getEmptyForZero(this.state.amount) !== '' &&
+                    this.getEmptyForZero(this.state.originator.guess)
+                break;
+
+            case STATUS_STARTED:
+                valid = 
+                    this.getEmptyForZero(this.state.originator.addr) !== '' && 
+                    this.getEmptyForZero(this.state.taker.addr) !== ''  && 
+                    this.getEmptyForZero(this.state.amount) !== '' &&
+                    this.getEmptyForZero(this.state.taker.guess)
+                break;
+
+            default:
+                valid = true
+                break;
+        }
+        return valid
+    }
+
     renderPlaceBet() {
         return (
             <div>
@@ -193,6 +218,7 @@ export default class Bet extends Component {
                         <div className="pure-controls">
                             <button
                                 className="pure-button pure-button-primary"
+                                disabled={!this.isValid()}
                                 onClick={this.placeBet.bind(this)}>Place Bet</button>
                         </div>
                     </fieldset>
@@ -316,7 +342,9 @@ export default class Bet extends Component {
                         </div>
 
                         <div className="pure-controls">
-                            <button className="pure-button pure-button-primary" onClick={this.takeBet.bind(this)}>Take Bet</button>
+                            <button className="pure-button pure-button-primary"
+                            disabled={!this.isValid()} 
+                            onClick={this.takeBet.bind(this)}>Take Bet</button>
                         </div>
                     </fieldset>
                 </div>
