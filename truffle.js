@@ -1,6 +1,7 @@
 require('dotenv').config()
-var mnemonic = process.env.MNEMONIC_PHRASE;
-var HDWalletProvider = require("truffle-hdwallet-provider");
+const MNEMONIC = process.env.MNEMONIC_PHRASE;
+const INFURA_API_KEY = process.env.MNEMONIC_PHRASE;
+const HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
   networks: {
@@ -10,11 +11,11 @@ module.exports = {
       network_id: "*" // Match any network id
     },
     ropsten: {
-      provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/fYegUFu9HulgkCPiCTuy"),
+      provider: new HDWalletProvider(MNEMONIC, "https://ropsten.infura.io/"+INFURA_API_KEY),
       network_id: 3
     },
     kovan: {
-      provider: new HDWalletProvider(mnemonic, "https://kovan.infura.io/fYegUFu9HulgkCPiCTuy"),
+      provider: new HDWalletProvider(MNEMONIC, "https://kovan.infura.io/"+INFURA_API_KEY),
       network_id: 42
     },
   }
